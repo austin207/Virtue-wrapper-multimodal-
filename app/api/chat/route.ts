@@ -3,9 +3,17 @@ import { streamText } from "ai"
 import { type NextRequest, NextResponse } from "next/server"
 import { getModelProvider } from "@/lib/env"
 
+interface ChatMessage {
+  role: string
+  content: string
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages, model } = await req.json()
+    const { messages, model } = (await req.json()) as {
+      messages: ChatMessage[]
+      model: string
+    }
 
     // Determine which provider to use based on the model
     const provider = getModelProvider(model)
@@ -15,7 +23,7 @@ export async function POST(req: NextRequest) {
       const { generateGrokCompletion } = await import("@/lib/grok-api")
 
       // Extract the last user message
-      const lastUserMessage = messages.filter((m) => m.role === "user").pop()
+      const lastUserMessage = messages.filter((m: ChatMessage) => m.role === "user").pop()
 
       if (!lastUserMessage) {
         return NextResponse.json({ error: "No user message found" }, { status: 400 })
